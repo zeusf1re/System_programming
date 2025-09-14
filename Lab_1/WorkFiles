@@ -1,0 +1,84 @@
+commands:
+
+mkdir sandbox
+cp * sandbox/
+
+1)
+mkdir Work
+cd Work
+mkdir Lab1 ФИО
+
+2)
+chmod u=rwx,g=rwx,o=w Lab1/
+chmod u=w,go= ФИО/
+lsd -ld *
+
+3)
+touch "Text @1" "Text $2" "Text #3"
+
+4)
+echo "Птица говорун отличается умом и сообразительностью!" | save --append "Text @1"
+echo "\nОтличается умом, отличается сообразительностью..." | save --append "Text @1"
+
+5)
+cat "Text @1" | save --append `Text $2`
+
+6)
+mv `Text $2` Lab1/
+sudo cp "Text @1" ФИО/
+
+7)
+gzip "Text @1"; gzip "Text #3"; tar -cf MyAchiv.tar "Text @1.gz" "Text #3.gz"
+
+8)
+gzip -d "Text #3.gz" "Text @1.gz" 
+history | where command has save
+echo $first_line | save --append `Text #3`; echo "\nБудь осторожен! Преступник вооружен!" | save --append `Text #3`
+
+9)
+chmod 777 ФИО
+cat "ФИО/Text @1" | str reverse | save ФИО/Result_one
+
+10)
+mv ФИО/Result_one ФИО/Result_two
+
+11)
+cd Lab1
+ls -a ../ФИО/ | where name starts-with '../ФИО/T' | get name | first | open | save Result3
+
+12)
+$"(open Result3)\n(uname)\n(date now)" | save -f Result3
+cd ..
+chmod 200 ФИО
+
+
+Info:
+shell: nushell, не bash синтаксис, например
+
+❯ ls
+╭───┬─────────────┬──────┬─────────┬───────────────╮
+│ # │    name     │ type │  size   │   modified    │
+├───┼─────────────┼──────┼─────────┼───────────────┤
+│ 0 │ Lab1        │ dir  │  3.4 kB │ 2 minutes ago │
+│ 1 │ MyAchiv.tar │ file │ 10.2 kB │ a day ago     │
+│ 2 │ Result_one  │ file │   188 B │ 15 hours ago  │
+│ 3 │ Text #3     │ file │   164 B │ a day ago     │
+│ 4 │ Text @1     │ file │   189 B │ a day ago     │
+│ 5 │ ФИО         │ dir  │  3.4 kB │ 15 hours ago  │
+╰───┴─────────────┴──────┴─────────┴───────────────╯
+
+
+❯ ls | where size >= 1kB | sort-by size
+╭───┬─────────────┬──────┬─────────┬───────────────╮
+│ # │    name     │ type │  size   │   modified    │
+├───┼─────────────┼──────┼─────────┼───────────────┤
+│ 0 │ Lab1        │ dir  │  3.4 kB │ 8 minutes ago │
+│ 1 │ ФИО         │ dir  │  3.4 kB │ 15 hours ago  │
+│ 2 │ MyAchiv.tar │ file │ 10.2 kB │ a day ago     │
+╰───┴─────────────┴──────┴─────────┴───────────────╯
+
+where это что-то по типу grep, но не совсем, функции grep с регулярками может выполнять start-with и т.д.
+
+идея в том, что почти все классические команды представляют вывод в качестве структуры(таблицы), где у все поля разделены по типам данных(text, date, ...)
+
+в 6 и 7-9 заданиях без sudo, не выполняется взаимодействие с директорией ФИО из-за установленных ранее прав
