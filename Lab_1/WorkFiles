@@ -28,7 +28,8 @@ mv `Text $2` Lab1/
 sudo cp "Text @1" ФИО/
 
 7)
-gzip "Text @1"; gzip "Text #3"; tar -cf MyAchiv.tar "Text @1.gz" "Text #3.gz"
+gzip "Text @1"; gzip "Text #3"
+tar -cf MyAchiv.tar "Text @1.gz" "Text #3.gz"
 
 8)
 gzip -d "Text #3.gz" "Text @1.gz" 
@@ -54,6 +55,7 @@ chmod 200 ФИО
 
 Info:
 shell: nushell, не bash синтаксис, например
+https://www.nushell.sh/
 
 ❯ ls
 ╭───┬─────────────┬──────┬─────────┬───────────────╮

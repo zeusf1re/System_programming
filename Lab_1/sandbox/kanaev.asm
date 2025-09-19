@@ -1,16 +1,20 @@
 format ELF
 public _start
 
-msg db "Канаев", 0xA, "Андрей", 0xA, "Ильич", 0xA, 0
+nameText:
+	db "Канаев", 10
+	db "Андрей", 10
+	db "Ильич", 10, 0
+nameTextEnd:
+	nameTextLength equ nameTextEnd - nameText
 
 _start:
-    ;инициализация регистров для вывода информации на экран
     mov eax, 4
     mov ebx, 1
-    mov ecx, msg
-    mov edx, 38 ;21 
+    mov ecx, nameText
+    mov edx, nameTextLength 
     int 0x80
-    ;инициализация регистров для успешного завершения работы программы
+
     mov eax, 1
     mov ebx, 0
     int 0x80
