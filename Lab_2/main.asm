@@ -237,7 +237,7 @@ section '.data' writeable
 
 	newline db 10
 
-    clearSeq db 0x1B, '[', '2', 'J', 0x1B, '[', 'H'  ; ESC [2J ESC [H
+    clearSeq db 0x1B, '[', '2', 'J', 0x1B, '[', 'H' 
 
 section '.bss' writeable
 	b_userChoice rb 2  ; symbol + \n
@@ -283,7 +283,7 @@ section '.text' executable
 		mov al, [b_userChoice]
 
 		cmp al, '1'
-		je ReversedStrTask
+		je FirstTask
 
 		cmp al, '2'
 		je PrintMatrix
@@ -303,51 +303,43 @@ section '.text' executable
 		cerr invalidChoiceErrText, invalidChoiceErrTextLength
 		exitWithError 2
 
-	ReversedStrTask:
+    FirstTask:
 		cout entryText, entryTextLength
 
 		cin b_input, 255
-		mov esi, eax
-		newLine
-
-		cmp esi, 0           
+		cmp eax, 0           
 	    jle emptyStringErr  
-    
-	    cmp byte [b_input + esi - 1], 10 ; в конец добавляем '\0'
-		jne .reverseStrStart
-		dec esi            
-    
-	
-	.reverseStrStart:
-		; 4. Разворачиваем строку
-		mov ecx, esi          ; ECX = счётчик (длина строки)
-		mov esi, b_input  ; ESI указывает на начало входной строки
-		mov edi, b_output ; EDI указывает на начало выходного буфера
+		push eax; len
 
-		push ecx ; пушим в стек длину строки
+        clearBuffer b_output, 255
+       
+        pop ecx
+        mov esi, b_input
+        mov edi, b_output
+        add esi, ecx
+        dec esi
+        
+        je .loop
 
-		add esi, ecx          ; ESI переходим к КОНЦУ входной строки
-		dec esi               ; ESI теперь на последнем символе
 
-	.reverseStrLoop:
-		; Копируем символы в обратном порядке
-		mov al, [esi]         ; Берём символ с конца входной строки
-		mov [edi], al         ; Записываем в начало выходной строки
-		dec esi               ; Двигаемся назад по входной строке
-		inc edi               ; Двигаемся вперед по выходной строке
+        .loop:
+            mov al, [esi]
+            mov [edi], al
 
-		dec ecx
-		jnz .reverseStrLoop
-		
-		; 5. Выводим результат
-		newLine
+            inc edi
+            dec esi
+            
+            dec ecx
+            jnz .loop
 
-		pop edx ; Длина
-		cout reversedStringText, reversedStringTextLength
-		cout b_output, edx             ; Развернутая строка (ECX содержит длину)
-		newLine
-		ret
-	 
+        .loopEnd:
+            dec ecx
+            mov byte [edi], 0
+            cout b_output, 255 
+            newLine
+            newLine
+            ret
+
 	SumOfDigits:
 		cout inputNumberText, inputNumberTextLength	
 
@@ -362,7 +354,6 @@ section '.text' executable
 		mov esi, b_input  ; ESI указывает на начало строки
 
 	.loop:
-		; Берём текущий символ
 		mov al, [esi]
 		
 		; Пропускаем символы переноса строки
@@ -386,12 +377,11 @@ section '.text' executable
 		exitWithError 4
 
 	.nextChar:
-		inc esi              ; Переходим к следующему символу
+		inc esi     
 		loop .loop ; Повторяем ECX раз
 		
 		call .numberToString
 		
-		; Выводим результат
 		newLine
 		cout sumOfDigitsText, sumOfDigitsTextLength 
 		cout bufferNumberOutput, 10  ; Выводим число (максимум 10 цифр)
@@ -402,29 +392,29 @@ section '.text' executable
 
 	.numberToString:
 		xor eax, eax
-		mov al, bl          ; AL = наша сумма (0-255)
+		mov al, bl         
 		mov edi, bufferNumberOutput + 10  ; EDI указывает на конец буфера
 		mov byte [edi], 0   ; Записываем нулевой байт в конец
 		
-		mov ecx, 10         ; Основание системы (десятичная)
+		mov ecx, 10         
 
 	.convertLoop:
-		dec edi             ; Двигаемся назад по буферу
-		xor edx, edx        ; Очищаем EDX
+		dec edi             
+		xor edx, edx       
 		div ecx             ; EDX:EAX / ECX = EAX (частное), EDX (остаток)
 		
 		; Преобразуем остаток в символ
 		add dl, '0'         ; DL = остаток (0-9) + '0' = '0'-'9'
-		mov [edi], dl       ; Записываем символ в буфер
+		mov [edi], dl     
 		
 		; Проверяем закончили ли
 		test eax, eax
-		jnz .convertLoop   ; Если частное != 0, продолжаем
+		jnz .convertLoop 
 		
 		; Вычисляем длину результата
-		mov esi, edi        ; Начало строки
+		mov esi, edi     
 		mov ecx, bufferNumberOutput + 10
-		sub ecx, esi        ; ECX = длина строки
+		sub ecx, esi    
 		mov [bufferNumberOutputLength], ecx
 		
 		ret
@@ -448,7 +438,6 @@ section '.text' executable
 
 
 		cout thirdNFourthTaskGreeting_3, thirdNFouthTaskGreeting_3Length
-		 ;   длину строк оставлю в регистре и буду туда-сюда перекидывать, но сначала нужно его превратить в инт
 		cin b_intInput, 12 
 		test eax, eax    ; eax - длина ввода длины строки
 	    jz emptyStringErr  
@@ -467,7 +456,6 @@ section '.text' executable
 		
 		mov byte [edi], 0
 
-;		cout b_output, [m_intX]
 
 		cout thirdNFourthTaskGreeting_4, thirdNFouthTaskGreeting_4Length
 		clearBuffer b_intInput, 12
