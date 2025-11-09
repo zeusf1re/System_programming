@@ -6,6 +6,7 @@ public PopHead
 public FillRand
 public PrintOdd
 public CountEven
+public CountEndWith1
 
 ; Переименованная структура, чтобы избежать конфликта с FASM
 S_Queue.head equ 0
@@ -179,12 +180,15 @@ PrintOdd:
     
     mov r10, [rbx] ; r10 = current_node->value 
     test r10, 1
-    jz .mainLoop_inc  ; Пропускаем четные
+    jz .mainLoop_inc  ; Пропускаем четные 
 
     ;print
     mov rax, r10
     mov r11, 10
     xor r12, r12      ; r12  счетчик символов
+	test rax, rax
+	jns .divLoop ; if pos
+	neg rax ; а в r10 осталось с минусом	
 
     .divLoop:
         xor rdx, rdx
@@ -194,10 +198,17 @@ PrintOdd:
         inc r12
         test rax, rax
         jnz .divLoop
+	
+	
+	test r10, r10
+	jns .popLoopPrep
+	push '-'
+	inc r12
 
-    lea r13, [rbp - 64] ; 64 потом что сохранили 4 регистра пушами(каждый по 8) а потом выделили еще 32
-    
-    mov r14, r12      ; сохраням r12 - counter
+	.popLoopPrep:
+		lea r13, [rbp - 64] ; 64 потом что сохранили 4 регистра пушами(каждый по 8) а потом выделили еще 32
+		
+		mov r14, r12      ; сохраням r12 - counter
 
     .popLoop:
         pop rax       
@@ -231,3 +242,43 @@ PrintOdd:
     ret
 
 
+
+; rdi - S_Queue*
+CountEndWith1:
+
+	push rdx
+	push rcx
+	push r11
+	push r12
+
+	mov r11, [rdi] ; Node* head
+	mov rcx, 10; base
+	xor r12, r12; counter
+	.loop:
+		test r11, r11
+		jz .end
+
+		xor rdx, rdx
+		mov rax, [r11] ; value
+		test rax, rax; cf - если отриц
+		jns .loopDiv ; полож
+
+		neg rax
+
+	.loopDiv:
+		div rcx ; rdx остаток, вроде как на знак пофиг
+		cmp rdx, 1
+		jne .next
+		inc r12
+
+	.next:
+		mov r11, [r11 + 8] ; node->next
+		jmp .loop
+
+	.end:	
+		mov rax, r12
+		pop r12
+		pop r11
+		pop rcx
+		pop rdx
+		ret
