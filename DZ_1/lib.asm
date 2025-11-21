@@ -160,10 +160,12 @@ CountEven:
         ret
 
 
+
 ; rdi = Queue*
 PrintOdd:
     push rbp
     mov rbp, rsp
+
     push rbx
     push r12
     push r13
