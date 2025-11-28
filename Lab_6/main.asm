@@ -65,9 +65,11 @@ _start:
     call getmaxy
     mov [yMax], rax
 
+
     mov rdi, [stdscr]
     call getmaxx
     mov [xMax], rax
+
 
     call reset_spiral_logic
 
