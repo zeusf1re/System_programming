@@ -1,40 +1,41 @@
-
 format ELF64
 
 extrn printf
 extrn scanf
 extrn exit
+extrn exp
 
 public main
 
 section '.data' writeable
 
-
     t_ask_x         db "Hello, enter x: ", 0
     t_ask_prec      db "Enter precision (number of digits after comma): ", 0
     
-
-    fmt_lf          db "%lf", 0     ; для double а звездочко для precision
-    fmt_d           db "%d", 0      ; для int
+    fmt_lf          db "%lf", 0     
+    fmt_d           db "%d", 0      
     
-    fmt_res         db 10, "Result: Sum = %.*lf", 10, "Iterations = %d", 10, 0 
-
+    fmt_res         db 10, "Result (Taylor): Sum = %.*lf", 10, "Iterations = %d", 10, 0 
+    fmt_exact       db "Exact: .*lf", 10, 0
     
     const_10        dd 10           
+    const_1         dq 1.0
 
 section '.bss' writeable
 
-    x               dq ?            ; double
-    k_prec          dd ?            ; int
-    n_counter       dq ?            ; int
-    eps             dt ?            ; 80bits
-    
+    x               dq ?            
+    k_prec          dd ?            
+    n_counter       dq ?            
+    eps             dt ?            
+    res_exact       dq ?            
 
 section '.text' executable
 
 main:
     push rbp
     mov rbp, rsp
+    sub rsp, 16            
+
 
     lea rdi, [t_ask_x]      
     xor rax, rax            
@@ -44,9 +45,6 @@ main:
     lea rsi, [x]            
     xor rax, rax
     call scanf              
-
-    
-    
     
     lea rdi, [t_ask_prec]
     xor rax, rax
@@ -55,117 +53,111 @@ main:
     lea rdi, [fmt_d]        
     lea rsi, [k_prec]       
     xor rax, rax
-    call scanf              ; scanf("%d", &k_prec)
+    call scanf              
 
 
     fld1                    
     mov ecx, [k_prec]       
-    
     test ecx, ecx           
     jz .eps_done            
-
 .calc_eps_loop:
     fidiv dword [const_10]  
     dec ecx                 
     jnz .calc_eps_loop      
-
 .eps_done:
     fstp tbyte [eps]      
-                         
-    fld qword [x]           ; Грузим x из памяти (64 -> 80 бит). ST0 = x
-    fmul st0, st0           ; ST0 = x * x
-  
-    fld1   
-    fld1  
-    ; ST0 = 1.0 a_current
-    ; ST1 = 1.0 sum
-    ; ST2 = x^2 const
+
+
+    ;  (1 + 2x^2)
+    movsd xmm0, [x]
+    mulsd xmm0, xmm0        ; xmm0 = x^2
+    
+    movsd xmm1, xmm0  
+    addsd xmm1, xmm1 
+    addsd xmm1, [const_1]   ; 1 + 2x^2
+    movsd [res_exact], xmm1 
+
+
+    call exp                ; xmm0 = exp(x^2)
+    
+
+    mulsd xmm0, [res_exact] 
+    movsd [res_exact], xmm0 
+
+    
+    fld qword [x]          ; ST0 = x
+    fmul st0, st0          
+    
+    fld1                   ; будет суммой
+    fld1                   ; а это qurr
+    
+    ;  a(1.0), Sum(1.0), x^2
     
     mov rcx, 1      
 
-    ; K_n = [(2n+1)/(2n-1)] * [x^2 / n]
 .main_loop:
-   
     mov [n_counter], rcx    
     
-    ; x^2 / n
-    fld st2  ; Стек: x^2, a_old, Sum, x^2
-                            
-    fidiv dword [n_counter] 
-                            ; Стек: (x^2/n), a_old, Sum, x^2
+   ; k
+    fld st2                 ; push x^2
+    fidiv dword [n_counter] ; x^2 / n
     
-    ; (2n + 1) / (2n - 1) 
-    fild qword [n_counter]  ;st0 = n
-    fadd st0, st0           
+    fild qword [n_counter]  
+    fadd st0, st0           ; 2n
+    fld st0                 
+    fld1
+    faddp st1, st0          ; 2n+1
+    fxch st1                ; 2n, 2n+1           exhange типо
+    fld1
+    fsubp st1, st0          
+    fdivp st1, st0          
     
-    fld st0                 ;copy st0
-    fld1                   
-    faddp st1, st0          ; 2n + 1. 
+    fmulp st1, st0          ; K = Coeff * (x^2/n)
     
-    fxch st1                ; Меняем местами. Стек: 2n, (2n+1), ...
-    fld1                    
-    fsubp st1, st0          ; 2n - 1.       Стек: (2n-1), (2n+1), ...
-    
-    fdivp st1, st0          ; st0 = 2n - 1 / 2n + 1
-                            ; Стек: Coeff_Part1, Coeff_Part2(x^2/n), a_old, Sum, x^2
-    
-    fmul st0, st1           ; st0 = res, no v st1 lezhit k2
+    ; new a
+    fmul st0, st1         
+    fstp st1                ; pop a_old
     
 
-    fxch st1                ; Стек: Trash, K, a_old...
-    fstp st0                ; Выкидываем Trash. 
-                            ; Стек: K, a_old, Sum, x^2. (Идеально!)
-
-
-    fmul st0, st1           ; ST0 = K * a_old = a_new.   ST1 = a_old.
+    fld st0      
+    fadd st0, st2 
+    fstp st2   
     
-    ; переносим первый во второй и попаем
-    fstp st1             
-                            ; Стек: a_new, Sum, x^2.
-    
-
-    ;sum
+	;precision
     fld st0   
-    faddp st2, st0   
-                            ; Стек: a_new, Sum_new, x^2.
-
-    ;check precision
-    fld st0                 ; Копия a_new
     fabs           
     fld tbyte [eps] 
+    fcomip st1              
+    fstp st0                
     
-    fcomip st1              ; сравнивает и попает, причем у меня даже флаги cpu ставятся
-
-    fstp st0          
-                            ; Стек: a_new, Sum, x^2.
-
     ja .loop_finish  
-                    
-                   
                             
     inc rcx       
     jmp .main_loop
 
 .loop_finish:
+    fstp st0 
     
-    fstp st0    ; был a_new
+    fstp qword [rsp]  
+    movsd xmm0, [rsp]      
     
+    fstp st0         ; ниче не осталось
 
-    ; FPU -> Память -> XMM0
-    fstp qword [rsp]      
-                         
-    movsd xmm0, [rsp]     
-    
-    fstp st0                ; clear fpu
-    
-
-    lea rdi, [fmt_res]    
-    mov esi, [k_prec]
-                            ; float уже в xmm0
-    mov rdx, rcx            
-    mov rax, 1 ; кол-во векторных регистров              
+    ; Print Taylor
+    lea rdi, [fmt_res]
+    mov esi, [k_prec]   
+    mov rdx, rcx           
+    mov rax, 1             
     call printf
 
+    ; Print Exact
+    movsd xmm0, [res_exact]
+    lea rdi, [fmt_exact]
+    mov esi, [k_prec]
+    mov rax, 1
+    call printf
+
+    add rsp, 16            
     xor rax, rax           
     pop rbp                 
-    ret                     ; Возврат из main (в libc start)
+    ret
