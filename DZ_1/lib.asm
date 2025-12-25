@@ -8,9 +8,10 @@ public PrintOdd
 public CountEven
 public CountEndWith1
 
-; Переименованная структура, чтобы избежать конфликта с FASM
+; -----------------------CONSTANTIKI-----------------------
 S_Queue.head equ 0
 S_Queue.tail equ 8
+HEAP_SIZE equ 65536 ; Размер кучи (64 КБ)
 
 section '.data' writable
 	urandomPath db '/dev/urandom', 0
@@ -18,13 +19,25 @@ section '.data' writable
 section '.bss' writable
 	p_heapStart rq 1
 	p_heap rq 1
+	p_heapEnd rq 1
 
 section '.text' executable
 
-; IN: rdi = указатель на начало арены, rsi = размер арены
 InitHeap:
-    mov [p_heap], rdi
-    mov [p_heapStart], rdi
+    mov rax, 12    ; sys_brk
+    xor rdi, rdi  
+    syscall
+    
+    mov [p_heapStart], rax
+    
+    mov rdi, rax
+    add rdi, HEAP_SIZE
+    
+    mov rax, 12
+    syscall
+    
+    mov [p_heapEnd], rax ; не уверен что буду юзать
+    
     ret
 
 ; rdi - S_Queue*

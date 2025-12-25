@@ -18,12 +18,12 @@ all: $(TARGET)
 
 # правило для линковки: исполняемый файл зависит от C и ASM объектных файлов
 $(TARGET): $(C_OBJECT) $(ASM_OBJECT)
-	$(CC) $(C_OBJECT) $(ASM_OBJECT) -o $(TARGET)
+	$(CC) -no-pie $(C_OBJECT) $(ASM_OBJECT) -o $(TARGET)
 	@echo "Программа '$(TARGET)' успешно собрана!"
 
 # правила что c.o от с и asm от asm
 $(C_OBJECT): $(C_SOURCE)
-	$(CC) -c -g $(C_SOURCE) -o $(C_OBJECT)
+	$(CC) -no-pie -c -g $(C_SOURCE) -o $(C_OBJECT)
 
 $(ASM_OBJECT): $(ASM_SOURCE)
 	$(AS) $(ASM_SOURCE) $(ASM_OBJECT)

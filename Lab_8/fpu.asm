@@ -16,7 +16,7 @@ section '.data' writeable
     fmt_d           db "%d", 0      
     
     fmt_res         db 10, "Result (Taylor): Sum = %.*lf", 10, "Iterations = %d", 10, 0 
-    fmt_exact       db "Exact: .*lf", 10, 0
+    fmt_exact       db "Exact: %.*lf", 10, 0
     
     const_10        dd 10           
     const_1         dq 1.0

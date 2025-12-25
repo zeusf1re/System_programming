@@ -21,7 +21,7 @@ void PrintQueue(Queue* q) {
     printf("]\n");
 }
 
-extern void InitHeap(void* ptr, long size);
+extern void InitHeap();
 extern void PushBack(Queue* q, long value);
 extern long PopHead(Queue* q);
 extern void FillRand(Queue* q);
@@ -31,13 +31,8 @@ extern void PrintOdd(Queue* q);
 
 
 int main() {
-    const long HEAP_SIZE = 65536;
-    void* heapMemory = malloc(HEAP_SIZE);
-    if (heapMemory == NULL) {
-        return 1;
-    }
 
-    InitHeap(heapMemory, HEAP_SIZE);
+    InitHeap();
 
     Queue myQueue;
     myQueue.head = NULL;
@@ -80,7 +75,6 @@ int main() {
         PopHead(&myQueue);
     }
     
-    free(heapMemory);
     printf("\nПрограмма завершена.\n");
 
     return 0;
