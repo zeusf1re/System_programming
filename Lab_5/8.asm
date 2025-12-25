@@ -21,19 +21,15 @@ _start:
     mov    [file2_name], rsi
     mov    [file3_name], rdx
 
-    mov    rax, 2 ;Помещает в rax номер системного вызова open (открыть файл).
+    mov    rax, 2 ; open
     mov    rdi, [file1_name]
-    mov    rsi, 0 ;открыть файл только для чтения
+    mov    rsi, 0 ; only for r
     mov    rdx, 0
     syscall
-    cmp    rax, 0 ;в rax находится файловый дескриптор (положительное число, идентификатор открытого файла)
+    cmp    rax, 0
     jl     .open_error1
 
     mov    [fd1], rax
-
-
-
-
 
 .read_loop1:
     mov    rax, 0
@@ -69,12 +65,6 @@ _start:
 
     mov    [fd2], rax
 
-
-
-
-
-
-
 .read_loop2:
     mov    rax, 0 ; 0 - read
     mov    rdi, [fd2]
@@ -102,12 +92,6 @@ _start:
     mov    rax, 3 ; 3 - close
     mov    rdi, [fd2]
     syscall
-
-
-
-
-
-
 
 
     mov    rdi, result_buffer
