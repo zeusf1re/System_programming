@@ -21,7 +21,7 @@ section '.text' executable
 
 _start:
     cmp qword [rsp], 5
-    jne exit_error
+    jne exit_errorint
 
     mov rdi, [rsp+32]
     call stoi
